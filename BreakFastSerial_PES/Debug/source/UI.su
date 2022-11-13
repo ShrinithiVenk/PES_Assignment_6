@@ -1,0 +1,6 @@
+../source/UI.c:14:7:author	16	static
+../source/UI.c:19:7:invalid	16	static
+../source/UI.c:24:7:dump	24	static
+../source/UI.c:39:7:help	16	static
+../source/UI.c:46:7:info	16	static
+../source/UI.c:65:6:Command_Process	88	static
