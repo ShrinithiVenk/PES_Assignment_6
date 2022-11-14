@@ -1,0 +1,36 @@
+ifeq ($(SHELL), cmd.exe)
+BUILD_DATE := $(shell python -c "from datetime import datetime; print(datetime.utcnow().strftime('%d/%m/%Y, %H:%M'))"
+BUILD_MACHINE := $(shell echo %username%)@$(shell hostname)
+else
+BUILD_MACHINE := $(shell whoami)@$(shell hostname)
+BUILD_DATE := $(shell date -u +"%d/%m/%Y, %H:%M")
+endif 
+
+version := $(subst -, ,$(shell git describe --long --dirty --tags))
+COMMIT := $(strip $(word 3, $(version)))
+COMMITS_PAST := $(strip $(word 2, $(version)))
+DIRTY := $(strip $(word 4, $(version)))
+
+ifneq ($(COMMITS_PAST), 0)
+         BUILD_INFO_COMMITS := .$(COMMITS_PAST)
+endif
+
+ifneq ($(DIRTY),)
+         BUILD_INFO_DIRTY :=+
+endif
+
+VERSION_TAG	:= Vesrion 1.0
+GIT_LOG := $(shell git log --pretty=format:"%H" HEAD -1)
+BUILD_INFO 	:= $(COMMIT)$(BUILD_INFO_COMMITS)$(BUILD_INFO_DIRTY)
+
+$(info Build Time: $(BUILD_DATE))
+$(info Build Version: $(VERSION_TAG))
+$(info Build Info: $(BUILD_INFO))
+
+GEN_OPTS__FLAG += -DVERSION_TAG="\"$(VERSION_TAG)\"" \
+                 -DGIT_LOG="\"$(GIT_LOG)\"" \
+                 -DVERSION_BUILD_INFO="\"$(BUILD_INFO)\""\
+				-DVERSION_BUILD_MACHINE="\"$(BUILD_MACHINE)\""\
+				-DVERSION_BUILD_DATE="\"$(BUILD_DATE)\""
+				
+				

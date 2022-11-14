@@ -1,13 +1,11 @@
 #include "Hexdump.h"
-
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
 /**
- * @Function: 	 hexdump()
- * @Parameters:  *add   - It is the pointer to the location from where the hex dump is to be executed
- * 			 	 nbytes - It is the number of bytes which to be dumped from the location pointed by *loc
- * @Description: The function returns the hex dump from the *loc pointer in the memory till the bytes given
- * 			  	 by the user. It would return the hex dump at in the buffer or array to which *str points to.
- * 			  	 Function would return empty *str in the case of error when *str is not large enough to accomodate
- * 			  	 the entire hex dump.
+ * @Function: 	 Takes the starting address and length for the requested memory space and generates the Hex dump for the memory requested as 16 bytes per line.
+ * @Parameters:  *add, nbytes
+ * @Returns   :   Hexdump of the requested memory space
  */
 void hexdump(const void *addr, size_t nbytes){
 

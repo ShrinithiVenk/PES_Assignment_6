@@ -8,14 +8,12 @@
 #include <stdbool.h>
 #include <MKL25Z4.h>
 
-#define BUFFER_SIZE		256					//Static size of cbfifo
-//#define min(x,y)	((x)<(y)?(x):(y))
+#define BUFFER_SIZE 256
 
 /**
- * The structure stores the necessary elements to track the states of the circular
- * buffer FIFO
+ * Structure with states of the circular buffer
  */
-typedef struct			//circular buffer structure
+typedef struct
 {
   char buffer_array[BUFFER_SIZE];
   uint8_t read, write;
@@ -26,84 +24,54 @@ typedef struct			//circular buffer structure
 
 }CBfifo_struct;
 
-
-
+/*
+ * @Function	Initializes the structure for cbfifo.
+ * @Param		Null
+ * @Returns		Null
+ */
 void cbfifo_Init(CBfifo_struct *queue);
 
 /*
- * Enqueues data onto the FIFO, up to the limit of the available FIFO
- * capacity.
- *
- * Parameters:
- *   buf      Pointer to the data
- *   nbyte    Max number of bytes to enqueue
- *
- * Returns:
- *   The number of bytes actually enqueued, which could be 0. In case
- * of an error, returns -1.
+ * @Function	Enqueues data onto the FIFO, up to the limit of the available FIFO capacity.
+ * @Param		str, nbytes
+ * @Returns		The number of bytes enqueued, which will be between 0 and nbyte.
  */
 size_t cbfifo_enqueue(CBfifo_struct *queue, const void *str, size_t nbytes);
 
-
 /*
- * Attempts to remove ("dequeue") up to nbyte bytes of data from the
- * FIFO. Removed data will be copied into the buffer pointed to by buf.
- *
- * Parameters:
- *   buf      Destination for the dequeued data
- *   nbyte    Bytes of data requested
- *
- * Returns:
- *   The number of bytes actually copied, which will be between 0 and
- * nbyte.
- *
- * To further explain the behavior: If the FIFO's current length is 24
- * bytes, and the caller requests 30 bytes, cbfifo_dequeue should
- * return the 24 bytes it has, and the new FIFO length will be 0. If
- * the FIFO is empty (current length is 0 bytes), a request to dequeue
- * any number of bytes will result in a return of 0 from
- * cbfifo_dequeue.
+ * @Function	Dequeues up to nbytes of data from the FIFO.
+ * @Param		str, nbtes
+ * @Returns		The number of bytes removed, which will be between 0 and nbyte.
  */
 size_t cbfifo_dequeue(CBfifo_struct *queue, void *str, size_t nbytes);
 
-
 /*
- * Returns the number of bytes currently on the FIFO.
- *
- * Parameters:
- *   none
- *
- * Returns:
- *   Number of bytes currently available to be dequeued from the FIFO
+ * @Function	Returns the length of the fifo
+ * @Param		null
+ * @Returns		returns the size of the fifo in bytes
  */
 size_t cbfifo_length(CBfifo_struct *queue);
 
-
 /*
- * Returns the FIFO's capacity
- *
- * Parameters:
- *   none
- *
- * Returns:
- *   The capacity, in bytes, for the FIFO
+ * @Function	Returns the current capacity of the fifo
+ * @Param		null
+ * @Returns		the current capacity of the fifo in bytes
  */
 size_t cbfifo_capacity();
 
-
-///*
-// * @Function	cbfifo_dump_state
-// * @Param		none
-// * @Returns		none
-// * @Description	prints the current state of the fifo for debug purposes
-// */
-//void cbfifo_dump_state(void);
-
-
+/*
+ * @Function	checks for buffer if full
+ * @Param		null
+ * @Returns		returns if buffer full
+ */
 bool cbfifo_full(CBfifo_struct *queue);
 
+/*
+ * @Function	checks for buffer if empty
+ * @Param		null
+ * @Returns		returns if buffer empty
+ */
 bool cbfifo_empty(CBfifo_struct *queue);
 
-//int cbfifo_size(CBfifo_struct *queue);
 
-#endif /* QUEUE_H_ */
+#endif

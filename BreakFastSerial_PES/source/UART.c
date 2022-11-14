@@ -1,49 +1,21 @@
 #include "UART.h"
-#include "cbfifo.h"
+#include <stdint.h>
+#include "MKL25Z4.h"
+#include "UI.h"
 #include "sysclock.h"
+#include "cbfifo.h"
 
 CBfifo_struct RxQ, TxQ;
 
-int __sys_write(int handle, char* buffer, int count){
-	if(buffer == NULL){
-		//Return error if null character is passed
-		return -1;
-	}
-
-	while(cbfifo_full(&TxQ)){
-		;	//Wait if transmitter buffer is full
-	}
-
-	if(cbfifo_enqueue(&TxQ, buffer, count) != count){
-		//Error in enqueue which is propogated further
-		return -1;
-	}
-	if(!(UART0->C2 & UART0_C2_TIE_MASK)){
-		UART0->C2 |= UART0_C2_TIE(1);
-	}
-	return 0;
-}
-
-int __sys_readc(void){
-	char chatr;
-	if(cbfifo_dequeue(&RxQ, &chatr, 1) != 1){
-		return -1;
-	}
-	if((chatr == '\r') || (chatr == '\r')){
-		chatr = '\r';
-		printf("%c", chatr);
-		chatr = '\n';
-		printf("%c", chatr);
-	}
-	else{
-		printf("%c", chatr);
-	}
-	return chatr;
-}
-
-void Init_UART0(uint32_t baud_rate){
+/**
+ * @Function: 	 Initializes the serial communication
+ * @Parameters:  baud_rate
+ * @Returns   :  Null
+ */
+void UART0_Init(uint32_t baud_rate)
+{
 	uint16_t setbaudrate;
-    uint8_t temp;
+	uint8_t temp;
 
 	// Enable clock gating for UART0 and Port A
 	SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
@@ -75,7 +47,7 @@ void Init_UART0(uint32_t baud_rate){
 	UART0->C1 = UART0_C1_LOOPS(0) | UART0_C1_M(0) | UART0_C1_PE(PARITY);
 	// Don't invert transmit data, don't enable interrupts for errors
 	UART0->C3 = UART0_C3_TXINV(0) | UART0_C3_ORIE(0)| UART0_C3_NEIE(0)
-			| UART0_C3_FEIE(0) | UART0_C3_PEIE(0);
+									| UART0_C3_FEIE(0) | UART0_C3_PEIE(0);
 
 	// Clear error flags
 	UART0->S1 = UART0_S1_OR(1) | UART0_S1_NF(1) | UART0_S1_FE(1) | UART0_S1_PF(1);
@@ -103,24 +75,29 @@ void Init_UART0(uint32_t baud_rate){
 	UART0->S1 &= ~UART0_S1_RDRF_MASK;
 }
 
-
-void UART0_IRQHandler(void){
+/**
+ * @Function: 	 Interrupt handler function that priorities the particular interrupts transmitted and received through UART
+ * @Parameters:  Null
+ * @Returns   :  Null
+ */
+void UART0_IRQHandler(void)
+{
 	uint8_t byte;
 	size_t return_bytes=0;
 
 	if (UART0->S1 & (UART_S1_OR_MASK |UART_S1_NF_MASK |
-		UART_S1_FE_MASK | UART_S1_PF_MASK)) {
-			// clear the error flags
-			UART0->S1 |= UART0_S1_OR_MASK | UART0_S1_NF_MASK |
-									UART0_S1_FE_MASK | UART0_S1_PF_MASK;
-			// read the data register to clear RDRF
-			byte = UART0->D;
+			UART_S1_FE_MASK | UART_S1_PF_MASK)) {
+		// clear the error flags
+		UART0->S1 |= UART0_S1_OR_MASK | UART0_S1_NF_MASK |
+				UART0_S1_FE_MASK | UART0_S1_PF_MASK;
+		// read the data register to clear RDRF
+		byte = UART0->D;
 	}
 	if (UART0->S1 & UART0_S1_RDRF_MASK) {
 		// received a character
 		byte = UART0->D;
 		return_bytes = cbfifo_enqueue(&RxQ, &byte, 1);
-		}
+	}
 	if ( (UART0->C2 & UART0_C2_TIE_MASK) && // transmitter interrupt enabled
 			(UART0->S1 & UART0_S1_TDRE_MASK) ) { // tx buffer empty
 		// can send another character
@@ -134,50 +111,51 @@ void UART0_IRQHandler(void){
 	}
 }
 
-void transmit(const void* str, size_t count){
-	cbfifo_enqueue(&TxQ, str, count);
+/**
+ * @Function: 	 Transmit function that allows to write to the buffer
+ * @Parameters:  buffer, count, handle
+ * @Returns   :  Null
+ */
+int __sys_write(int handle, char* buffer, int count){
+	if(buffer == NULL){
+		//Return error if null character is passed
+		return -1;
+	}
 
-	//Start transmitting
+	while(cbfifo_full(&TxQ)){
+		;	//Wait if transmitter buffer is full
+	}
+
+	if(cbfifo_enqueue(&TxQ, buffer, count) != count){
+		//Error if enqueued further
+		return -1;
+	}
 	if(!(UART0->C2 & UART0_C2_TIE_MASK)){
 		UART0->C2 |= UART0_C2_TIE(1);
 	}
+	return 0;
 }
 
-
-size_t receive(void* str, size_t count){
-	return cbfifo_dequeue(&RxQ, str, count);
-}
-
-void accumulate(void){
-	char acc_buf[640];
-	char *ptr_acc = &acc_buf[0];
-	uint8_t ch;
-
-	while(ch != '\r'){				//In loop until terminating character is received
-		while(cbfifo_empty(&RxQ)){
-			;						//Wait if Rx queue is still empty to handle the user input commands
-		}
-
-		cbfifo_dequeue(&RxQ, &ch, 1);
-		putchar(ch);
-		if((ch != '\r') && (ch != '\n')){
-			//Not handling backspace here.
-			*ptr_acc = (char)ch;
-			ptr_acc++;
-			*ptr_acc = '\0';		//Adding terminating char at the end, it is overwritten when we receive next char
-		}
-
-		if(!(UART0->C2 & UART0_C2_TIE_MASK)){
-			UART0->C2 |= UART0_C2_TIE(1);
-		}
-
-		if(ch == '\r'){
-			ch = '\n';
-			printf("\r\n");
-			break;
-		}
+/**
+ * @Function: 	 Receive function that allows to receive output from the buffer
+ * @Parameters:  Null
+ * @Returns   :  Received character
+ */
+int __sys_readc(void){
+	char chatr;
+	if(cbfifo_dequeue(&RxQ, &chatr, 1) != 1){
+		return -1;
 	}
-
-	Command_Process(acc_buf);		//Segmenting the received cmd into token to handle function calls
-	ptr_acc = &acc_buf[0];			//Resetting the pointer back to initial location for next accumulation
+	if((chatr == '\r') || (chatr == '\r')){
+		chatr = '\r';
+		printf("%c", chatr);
+		chatr = '\n';
+		printf("%c", chatr);
+	}
+	else{
+		printf("%c", chatr);
+	}
+	return chatr;
 }
+
+

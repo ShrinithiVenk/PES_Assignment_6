@@ -1,24 +1,38 @@
 #ifndef UART_H_
 #define UART_H_
+#include <stdio.h>
+#include "cbfifo.h"
 
-#include <stdint.h>
-#include "MKL25Z4.h"
-#include "UI.h"
+extern CBfifo_struct RxQ, TxQ;
+
+ // UART Configuration
 
 #define OVERSAMPLE_RATE 16
-
-/*******************************************************
- * UART Configuration
- ******************************************************/
 #define	BAUD_RATE 38400
 #define DATA_SIZE 8
 #define PARITY 0
 #define	STOP_BITS 2
 
+/**
+ * @Function: 	 Initializes the serial communication
+ * @Parameters:  baud_rate
+ * @Returns   :  Null
+ */
+void UART0_Init(uint32_t baud_rate);
 
-void transmit(const void* str, size_t count);
-size_t receive(void* str, size_t count);
-void Init_UART0(uint32_t baud_rate);
-void accumulate(void);
+/**
+ * @Function: 	 Transmit function that allows to write to the buffer
+ * @Parameters:  buffer, count, handle
+ * @Returns   :  Null
+ */
+int __sys_write(int handle, char* buffer, int count);
+
+/**
+ * @Function: 	 Receive function that allows to receive output from the buffer
+ * @Parameters:  Null
+ * @Returns   :  Received character
+ */
+int __sys_readc(void);
+
 
 #endif /* UART_H_ */

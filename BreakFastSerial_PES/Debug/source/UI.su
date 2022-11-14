@@ -1,6 +1,7 @@
-../source/UI.c:14:7:author	16	static
-../source/UI.c:19:7:invalid	16	static
-../source/UI.c:24:7:dump	24	static
-../source/UI.c:39:7:help	16	static
-../source/UI.c:46:7:info	16	static
-../source/UI.c:65:6:Command_Process	88	static
+../source/UI.c:8:6:author	16	static
+../source/UI.c:18:6:invalid	16	static
+../source/UI.c:28:6:dump	24	static
+../source/UI.c:46:6:menu	16	static
+../source/UI.c:56:6:info	16	static
+../source/UI.c:81:6:process_Command_process	816	static
+../source/UI.c:120:6:Command_Process	88	static
